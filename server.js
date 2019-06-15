@@ -9,10 +9,12 @@ connectDB();
 // body-parser is now built in to express instead of having to install it separately
 app.use(express.json({extended: false}));
 
+// requests made to the root return api running msg
 app.get("/", (req, res) => {
     res.send("API Running.");
 });
 
+// routes
 app.use("/api/users", require("./routes/api/users"));
 app.use("/api/auth", require("./routes/api/auth"));
 app.use("/api/profile", require("./routes/api/profile"));

@@ -13,6 +13,7 @@ const config = require("config");
 router.post(
     "/",
     [
+        // checks for POST param of name, and returns a message if it fails the validation rules indicated by methods chained after
         check("name", "Name is required.")
             .not()
             .isEmpty(),
@@ -23,6 +24,7 @@ router.post(
         ).isLength({min: 6})
     ],
     async (req, res) => {
+        // these are the results of the validation methods returned by the call back check methods
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({
@@ -30,6 +32,7 @@ router.post(
             });
         }
 
+        // destructuring req.body object into individual params
         const {name, email, password} = req.body;
 
         try {
