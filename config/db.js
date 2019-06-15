@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
 const config = require("config");
+
+// db represents the url we are using to connect to mongo
 const db = config.get("mongoURI");
 
 const connectDB = async () => {
     try {
+        // wait for a response from the mongodb server
         await mongoose.connect(db, {
             useNewUrlParser: true,
             useCreateIndex: true
