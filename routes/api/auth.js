@@ -8,8 +8,8 @@ const {check, validationResult} = require("express-validator/check");
 const bcrypt = require("bcryptjs");
 
 // @route GET api/auth
-// @desc Test route
-// @access Public
+// @desc Returns a user object without password
+// @access Private
 // adding function as second param to router.get adds middleware to individual route
 router.get("/", auth, async (req, res) => {
     try {

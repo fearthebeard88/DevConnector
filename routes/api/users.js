@@ -67,6 +67,7 @@ router.post(
             user.password = await bcrypt.hash(password, salt);
             await user.save();
 
+            // Payload is how the server knows who the user is, because the payload includes a user id from mongoDB
             const payload = {
                 user: {
                     id: user.id
