@@ -73,7 +73,7 @@ router.post(
         // Build profile object
         const profileFields = {};
         profileFields.user = req.user.id;
-        params.forEach(param => {
+        params.map(param => {
             if (
                 typeof req.body[param] == "undefined" ||
                 req.body[param].trim().length == 0
@@ -94,7 +94,7 @@ router.post(
 
         // Build profile social parameter
         profileFields.social = {};
-        socialParams.forEach(param => {
+        socialParams.map(param => {
             if (
                 typeof req.body[param] == "undefined" ||
                 req.body[param].trim().length == 0
@@ -216,25 +216,28 @@ router.put(
             return res.status(400).json({errors: errors.array()});
         }
 
-        const {
-            title,
-            company,
-            location,
-            from,
-            to,
-            current,
-            description
-        } = req.body;
+        const props = [
+            "title",
+            "company",
+            "location",
+            "from",
+            "to",
+            "current",
+            "description"
+        ];
 
-        const newExp = {
-            title,
-            company,
-            location,
-            from,
-            to,
-            current,
-            description
-        };
+        var newExp = {};
+
+        props.map(prop => {
+            if (
+                typeof req.body[prop] == "undefined" ||
+                req.body[prop].trim().length == 0
+            ) {
+                return;
+            }
+
+            newExp[prop] = req.body[prop].trim();
+        });
 
         try {
             const profile = await Profile.findOne({user: req.user.id});
@@ -246,6 +249,153 @@ router.put(
             profile.experience.unshift(newExp);
             await profile.save();
             return res.status(200).json(profile);
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json({error: err});
+        }
+    }
+);
+
+/**
+ * @route api/profile/experience/edit/:exp_id
+ * @description Edit a profile experience
+ * @access Private
+ */
+router.put("/experience/edit/:exp_id", auth, async (req, res) => {
+    try {
+        const profile = await Profile.findOne({user: req.user.id});
+        if (!profile) {
+            return res.status(400).json({msg: "No profile found."});
+        }
+
+        var expIndex = profile.experience
+            .map(exp => {
+                return exp.id;
+            })
+            .indexOf(req.params.exp_id);
+
+        if (expIndex == -1) {
+            return res.status(400).json({msg: "No experience found."});
+        }
+
+        const props = [
+            "title",
+            "company",
+            "location",
+            "from",
+            "to",
+            "current",
+            "description"
+        ];
+
+        props.map(prop => {
+            if (
+                typeof req.body[prop] == "undefined" ||
+                req.body[prop].trim().length == 0
+            ) {
+                return;
+            }
+
+            profile.experience[expIndex][prop] = req.body[prop].trim();
+        });
+
+        await profile.save();
+        return res.status(200).json({msg: "Experience updated successfully."});
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({error: err});
+    }
+});
+
+/**
+ * @route api/profile/experience/:exp_id
+ * @description Delete users experience by exp_id
+ * @access Private
+ */
+router.delete("/experience/:exp_id", auth, async (req, res) => {
+    try {
+        const profile = await Profile.findOne({user: req.user.id});
+        if (!profile) {
+            return res.status(400).json({msg: "Unable to find profile."});
+        }
+
+        const removeIndex = profile.experience
+            .map(exp => {
+                return exp.id;
+            })
+            .indexOf(req.params.exp_id);
+
+        if (removeIndex == -1) {
+            return res
+                .status(400)
+                .json({msg: "Experience not found for this profile."});
+        }
+
+        profile.experience.splice(removeIndex, 1);
+        await profile.save();
+        return res.status(200).json({msg: "Experience removed."});
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({error: err});
+    }
+});
+
+/**
+ * @route PUT api/profile/education
+ * @description Add education to profile
+ * @access Private
+ */
+router.put(
+    "/education",
+    [
+        auth,
+        [
+            check("school", "School is required.")
+                .not()
+                .isEmpty(),
+            check("degree", "Degree is required.")
+                .not()
+                .isEmpty(),
+            check("fieldofstudy", "Field of Study is required.")
+                .not()
+                .isEmpty(),
+            check("from", "From date is required.")
+                .not()
+                .isEmpty()
+        ]
+    ],
+    async (req, res) => {
+        try {
+            const props = [
+                "school",
+                "degree",
+                "fieldofstudy",
+                "from",
+                "to",
+                "current",
+                "description"
+            ];
+
+            let newEdu = {};
+            props.map(prop => {
+                if (
+                    typeof req.body[prop] == "undefined" ||
+                    req.body[prop].trim().length == 0
+                ) {
+                    return;
+                }
+
+                newEdu[prop] = req.body[prop].trim();
+            });
+
+            const profile = await Profile.findOne({user: req.user.id});
+            if (!profile) {
+                return res.status(400).json({msg: "No profile found."});
+            }
+
+            profile.education.unshift(newEdu);
+            await profile.save();
+            return res.status(200).json({msg: "Education added."});
         } catch (err) {
             console.error(err);
             return res.status(500).json({error: err});
