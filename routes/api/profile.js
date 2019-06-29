@@ -403,4 +403,40 @@ router.put(
     }
 );
 
+/**
+ * @route DELETE api/profile/education/edu_id
+ * @description Delete education object by id
+ * @access Private
+ */
+router.delete("/education/:edu_id", auth, async (req, res) => {
+    try {
+        const profile = await Profile.findOne({user: req.user.id});
+
+        if (!profile) {
+            return res.status(400).json({msg: "No profile found."});
+        }
+        var education = profile.education;
+        var index = null;
+        for (let i = 0; i < education.length; i++) {
+            if (education[i].id == req.params.edu_id) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index === null) {
+            return res
+                .status(400)
+                .json({msg: "No education by that id was found."});
+        }
+
+        profile.education.splice(index, 1);
+        await profile.save();
+        return res.status(200).json(profile);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({error: err});
+    }
+});
+
 module.exports = router;
