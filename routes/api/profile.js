@@ -4,6 +4,8 @@ const auth = require("../../middleware/auth.js");
 const Profile = require("../../models/Profile.js");
 const User = require("../../models/User.js");
 const {check, validationResult} = require("express-validator/check");
+const request = require("request");
+const config = require("config");
 
 /**
  * @route GET api/profile/me
@@ -25,7 +27,7 @@ router.get("/me", auth, async (req, res) => {
         res.json(profile);
     } catch (err) {
         console.error(err.message);
-        res.status(500).send("Server Error Occured.");
+        res.status(500).json({error: err.message});
     }
 });
 
@@ -143,7 +145,7 @@ router.get("/", async (req, res) => {
         return res.status(200).json(profiles);
     } catch (err) {
         console.error(err.message);
-        return res.status(500).json({error: err});
+        return res.status(500).json({error: err.message});
     }
 });
 
@@ -168,7 +170,7 @@ router.get("/user/:user_id", async (req, res) => {
             return res.status(400).json({msg: "No profile found."});
         }
 
-        return res.status(500).json({error: err});
+        return res.status(500).json({error: err.message});
     }
 });
 
@@ -251,7 +253,7 @@ router.put(
             return res.status(200).json(profile);
         } catch (err) {
             console.error(err);
-            return res.status(500).json({error: err});
+            return res.status(500).json({error: err.message});
         }
     }
 );
@@ -303,7 +305,7 @@ router.put("/experience/edit/:exp_id", auth, async (req, res) => {
         return res.status(200).json({msg: "Experience updated successfully."});
     } catch (err) {
         console.error(err);
-        return res.status(500).json({error: err});
+        return res.status(500).json({error: err.message});
     }
 });
 
@@ -336,7 +338,7 @@ router.delete("/experience/:exp_id", auth, async (req, res) => {
         return res.status(200).json({msg: "Experience removed."});
     } catch (err) {
         console.error(err);
-        return res.status(500).json({error: err});
+        return res.status(500).json({error: err.message});
     }
 });
 
@@ -398,7 +400,7 @@ router.put(
             return res.status(200).json({msg: "Education added."});
         } catch (err) {
             console.error(err);
-            return res.status(500).json({error: err});
+            return res.status(500).json({error: err.message});
         }
     }
 );
@@ -435,7 +437,41 @@ router.delete("/education/:edu_id", auth, async (req, res) => {
         return res.status(200).json(profile);
     } catch (err) {
         console.error(err);
-        return res.status(500).json({error: err});
+        return res.status(500).json({error: err.message});
+    }
+});
+
+/**
+ * @route GET api/profile/github/:username
+ * @description Get user repos from github by username
+ * @access Public
+ */
+router.get("/github/:username", (req, res) => {
+    try {
+        const options = {
+            uri: `https://api.github.com/users/${
+                req.params.username
+            }/repos?per_page=5&sort=created:asc&client_id=${config.get(
+                "githubClientID"
+            )}&client_secret=${config.get("guthubClientSecret")}`,
+            method: "GET",
+            headers: {"user-agent": "node.js"}
+        };
+
+        request(options, (error, response, body) => {
+            if (error) {
+                console.error(error);
+            }
+
+            if (response.statusCode !== 200) {
+                return res.status(404).json({msg: "No Github profile found."});
+            }
+
+            return res.json(JSON.parse(body));
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({error: err.message});
     }
 });
 
