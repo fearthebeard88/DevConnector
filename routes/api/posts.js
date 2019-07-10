@@ -168,4 +168,87 @@ router.put("/like/:id", auth, async (req, res) => {
     }
 });
 
+/**
+ * @route POST api/posts/comment/:id
+ * @description Add comment to post
+ * @access Private
+ */
+router.post(
+    "/comment/:id",
+    [
+        auth,
+        check("text", "Text field cannot be empty.")
+            .not()
+            .isEmpty()
+    ],
+    async (req, res) => {
+        try {
+            const user = await User.findById(req.user.id);
+            const post = await Post.findById(req.params.id);
+            if (!post) {
+                return res.status(404).json({msg: "No Post found by that ID."});
+            }
+
+            if (!user) {
+                return res.status(404).json({msg: "User not found."});
+            }
+
+            const newComment = {
+                name: user.name,
+                text: req.body.text,
+                user: user.id,
+                avatar: user.avatar
+            };
+
+            post.comments.unshift(newComment);
+            await post.save();
+            return res.status(200).json(post.comments);
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json(err);
+        }
+    }
+);
+
+/**
+ * @route DELETE api/posts/comment/:post_id/:comment_id
+ * @description Delete a comment from a post
+ * @access Private
+ */
+router.delete("/comment/:post_id/:comment_id", auth, async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.post_id);
+        if (!post) {
+            return res.status(404).json({msg: "Post not found."});
+        }
+
+        const comment = post.comments.find(comment => {
+            return comment.id === req.params.comment_id;
+        });
+
+        if (!comment) {
+            return res.status(404).json({msg: "Comment not found."});
+        }
+
+        if (comment.user.toString() !== req.user.id) {
+            return res
+                .status(401)
+                .json({msg: "You are not authorized to delete this comment."});
+        }
+
+        const index = post.comments.map((comment, i) => {
+            if (comment.user.toString() === req.params.comment_id) {
+                return i;
+            }
+        });
+
+        post.comments.splice(index, 1);
+        await post.save();
+        return res.status(200).json(post.comments);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json(err);
+    }
+});
+
 module.exports = router;
