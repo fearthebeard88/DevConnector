@@ -5,7 +5,9 @@
     "main": "server.js",
     "scripts": {
         "start": "node server.js",
-        "server": "nodemon server.js"
+        "server": "nodemon server.js",
+        "client": "npm start --prefix client",
+        "dev": "concurrently \"npm run server\" \"npm run client\""
     },
     "author": "",
     "license": "ISC",
@@ -23,5 +25,6 @@
         "concurrently": "^4.1.0",
         "nodemon": "^1.19.1",
         "mem": "^4.0.0"
-    }
+    },
+    "proxy": "http://timhost.local:5000"
 }
